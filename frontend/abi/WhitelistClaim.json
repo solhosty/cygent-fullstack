@@ -1,0 +1,106 @@
+[
+  {
+    "type": "function",
+    "name": "claim",
+    "stateMutability": "nonpayable",
+    "inputs": [{ "name": "proof", "type": "bytes32[]" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "deposit",
+    "stateMutability": "payable",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "setMerkleRoot",
+    "stateMutability": "nonpayable",
+    "inputs": [{ "name": "newRoot", "type": "bytes32" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "setClaimAmount",
+    "stateMutability": "nonpayable",
+    "inputs": [{ "name": "newClaimAmount", "type": "uint256" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "pause",
+    "stateMutability": "nonpayable",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "unpause",
+    "stateMutability": "nonpayable",
+    "inputs": [],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address" }]
+  },
+  {
+    "type": "function",
+    "name": "merkleRoot",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "bytes32" }]
+  },
+  {
+    "type": "function",
+    "name": "claimAmount",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "paused",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "bool" }]
+  },
+  {
+    "type": "function",
+    "name": "claimed",
+    "stateMutability": "view",
+    "inputs": [{ "name": "account", "type": "address" }],
+    "outputs": [{ "name": "", "type": "bool" }]
+  },
+  {
+    "anonymous": false,
+    "type": "event",
+    "name": "Claimed",
+    "inputs": [
+      { "indexed": true, "name": "account", "type": "address" },
+      { "indexed": false, "name": "amount", "type": "uint256" }
+    ]
+  },
+  {
+    "anonymous": false,
+    "type": "event",
+    "name": "Deposited",
+    "inputs": [
+      { "indexed": true, "name": "from", "type": "address" },
+      { "indexed": false, "name": "amount", "type": "uint256" }
+    ]
+  },
+  {
+    "anonymous": false,
+    "type": "event",
+    "name": "MerkleRootUpdated",
+    "inputs": [
+      { "indexed": true, "name": "previousRoot", "type": "bytes32" },
+      { "indexed": true, "name": "newRoot", "type": "bytes32" }
+    ]
+  }
+]
