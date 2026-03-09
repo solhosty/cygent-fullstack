@@ -1,0 +1,7 @@
+node_modules/
+
+contracts/artifacts/
+
+.env
+
+frontend/.next/

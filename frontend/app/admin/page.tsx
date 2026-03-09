@@ -17,7 +17,6 @@ export default function AdminPage() {
     isPaused,
     merkleRoot,
     setMerkleRoot,
-    setClaimAmountEth,
     depositEth,
     pause,
     unpause,
