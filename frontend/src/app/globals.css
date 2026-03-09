@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  min-height: 100vh;
+  background-attachment: fixed;
+}
+
+.panel {
+  @apply rounded-2xl border border-white/50 bg-white/70 p-6 shadow-card backdrop-blur;
+}
+
+.button-primary {
+  @apply inline-flex items-center justify-center rounded-xl bg-ink px-5 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px] hover:bg-ink/90 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.button-secondary {
+  @apply inline-flex items-center justify-center rounded-xl border border-ink/20 bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:translate-y-[-1px] hover:bg-cream;
+}
+
+.card-grid {
+  @apply grid gap-4 md:grid-cols-2 lg:grid-cols-3;
+}

@@ -1,0 +1,11 @@
+{
+  "name": "cygent-fullstack",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "contracts:test": "cd contracts && forge test -vvv",
+    "contracts:deploy:sepolia": "cd contracts && forge script script/DeployWhitelistClaim.s.sol:DeployWhitelistClaim --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast",
+    "frontend:dev": "npm --prefix frontend run dev",
+    "frontend:build": "npm --prefix frontend run build"
+  }
+}
