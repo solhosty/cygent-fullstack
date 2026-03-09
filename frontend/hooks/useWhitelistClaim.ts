@@ -66,6 +66,9 @@ export function useWhitelistClaim() {
     return address.toLowerCase() === String(ownerRead.data).toLowerCase();
   }, [address, ownerRead.data]);
 
+  const merkleRoot = merkleRootRead.data ? String(merkleRootRead.data) : "0x";
+  const hasMerkleRoot = merkleRoot !== "0x";
+
   async function claim(proof: HexProof) {
     await writeContractAsync({
       address: whitelistClaimAddress,
@@ -137,7 +140,8 @@ export function useWhitelistClaim() {
     hasClaimed: Boolean(claimedRead.data),
     isPaused: Boolean(pausedRead.data),
     claimAmountWei: claimAmountRead.data ? String(claimAmountRead.data) : "0",
-    merkleRoot: merkleRootRead.data ? String(merkleRootRead.data) : "0x",
+    merkleRoot,
+    hasMerkleRoot,
     isOwner,
     isTxMined: waitResult.isSuccess
   };

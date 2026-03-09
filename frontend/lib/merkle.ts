@@ -10,8 +10,21 @@ export type MerkleTreeData = {
   proofsByAddress: Record<string, HexString[]>;
 };
 
+export type AddressProofResult = {
+  exists: boolean;
+  proof: HexString[];
+};
+
 function normalizeAddress(address: string): string {
   return getAddress(address.trim()).toLowerCase();
+}
+
+function tryNormalizeAddress(address: string): string | null {
+  try {
+    return normalizeAddress(address);
+  } catch {
+    return null;
+  }
 }
 
 function toBuffer(hexValue: `0x${string}`): Buffer {
@@ -79,12 +92,50 @@ export function getProofFromTreeData(
   data: MerkleTreeData | null,
   address: string
 ): HexString[] {
+  return getAddressProofResult(data, address).proof;
+}
+
+export function isAddressInTreeData(data: MerkleTreeData | null, address: string): boolean {
   if (!data) {
-    return [];
+    return false;
   }
 
-  const normalized = normalizeAddress(address);
-  return data.proofsByAddress[normalized] ?? [];
+  const normalized = tryNormalizeAddress(address);
+  if (!normalized) {
+    return false;
+  }
+
+  return data.addresses.some((item) => item.toLowerCase() === normalized);
+}
+
+export function getAddressProofResult(
+  data: MerkleTreeData | null,
+  address: string
+): AddressProofResult {
+  if (!data) {
+    return { exists: false, proof: [] };
+  }
+
+  const normalized = tryNormalizeAddress(address);
+  if (!normalized) {
+    return { exists: false, proof: [] };
+  }
+
+  const exists = isAddressInTreeData(data, normalized);
+  if (!exists) {
+    return { exists: false, proof: [] };
+  }
+
+  const directProof = data.proofsByAddress[normalized];
+  if (directProof && directProof.length > 0) {
+    return { exists: true, proof: directProof };
+  }
+
+  const rebuiltData = buildMerkleTreeData(data.addresses);
+  return {
+    exists: true,
+    proof: rebuiltData.proofsByAddress[normalized] ?? []
+  };
 }
 
 export function getRoot(addresses: string[]): string {

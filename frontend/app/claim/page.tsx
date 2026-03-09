@@ -5,8 +5,8 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
 import {
+  getAddressProofResult,
   getLeaf,
-  getProofFromTreeData,
   rootMatchesTreeData
 } from "@/lib/merkle";
 import { useWhitelistClaim } from "@/hooks/useWhitelistClaim";
@@ -25,7 +25,8 @@ export default function ClaimPage() {
     hasClaimed,
     claimAmountWei,
     isPaused,
-    merkleRoot
+    merkleRoot,
+    hasMerkleRoot
   } = useWhitelistClaim();
 
   useEffect(() => {
@@ -34,20 +35,34 @@ export default function ClaimPage() {
 
   const leaf = useMemo(() => (address ? getLeaf(address) : null), [address]);
   const canUseStoredTree = useMemo(() => {
-    if (!savedTreeData || !merkleRoot || merkleRoot === "0x") {
+    if (!savedTreeData || !hasMerkleRoot) {
       return false;
     }
     return rootMatchesTreeData(savedTreeData, merkleRoot);
-  }, [savedTreeData, merkleRoot]);
+  }, [hasMerkleRoot, merkleRoot, savedTreeData]);
 
-  const proof = useMemo(() => {
-    if (!address || !canUseStoredTree || !savedTreeData) {
-      return [];
+  const connectedProofResult = useMemo(
+    () => getAddressProofResult(savedTreeData, address ?? ""),
+    [address, savedTreeData]
+  );
+
+  const checkedProofResult = useMemo(
+    () => getAddressProofResult(savedTreeData, checkAddress),
+    [checkAddress, savedTreeData]
+  );
+
+  const claimProof = useMemo(
+    () => (canUseStoredTree ? connectedProofResult.proof : []),
+    [canUseStoredTree, connectedProofResult.proof]
+  );
+
+  const isEligible = Boolean(address && canUseStoredTree && connectedProofResult.exists);
+
+  useEffect(() => {
+    if (address && !checkAddress) {
+      setCheckAddress(address);
     }
-    return getProofFromTreeData(savedTreeData, address);
-  }, [address, canUseStoredTree, savedTreeData]);
-
-  const isEligible = Boolean(address && canUseStoredTree && proof.length > 0);
+  }, [address, checkAddress]);
 
   const checkAddressResult = useMemo(() => {
     if (!checkAddress) {
@@ -60,10 +75,10 @@ export default function ClaimPage() {
       return "Saved tree root does not match on-chain root";
     }
 
-    const normalized = checkAddress.trim().toLowerCase();
-    const exists = Boolean(savedTreeData.proofsByAddress[normalized]);
-    return exists ? "Address is eligible in saved tree" : "Address not found in saved tree";
-  }, [canUseStoredTree, checkAddress, savedTreeData]);
+    return checkedProofResult.exists
+      ? "Address is eligible in saved tree"
+      : "Address not found in saved tree";
+  }, [canUseStoredTree, checkAddress, checkedProofResult.exists, savedTreeData]);
 
   async function onClaim() {
     if (!address) {
@@ -77,7 +92,7 @@ export default function ClaimPage() {
     }
 
     try {
-      await claim(proof);
+      await claim(claimProof);
       toast.success("Claim transaction submitted");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Claim failed";
@@ -119,8 +134,9 @@ export default function ClaimPage() {
 
           <div className="mt-4 text-sm text-slate-300">
             <p>{checkAddressResult}</p>
-            <p>Proof length: {proof.length}</p>
-            <p>Eligible: {isEligible ? "Yes" : "No"}</p>
+            <p>Proof length: {checkedProofResult.proof.length}</p>
+            <p>Checker eligible: {canUseStoredTree && checkedProofResult.exists ? "Yes" : "No"}</p>
+            <p>Connected wallet eligible: {isEligible ? "Yes" : "No"}</p>
           </div>
 
           <button
