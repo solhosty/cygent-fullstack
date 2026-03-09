@@ -1,34 +1,69 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
-import { getLeaf, getProof, parseAddressList } from "@/lib/merkle";
+import {
+  getLeaf,
+  getProofFromTreeData,
+  rootMatchesTreeData
+} from "@/lib/merkle";
 import { useWhitelistClaim } from "@/hooks/useWhitelistClaim";
+import { loadTreeData } from "@/lib/whitelistTreeStorage";
+import type { MerkleTreeData } from "@/lib/merkle";
 
 export default function ClaimPage() {
   const { address, isConnected } = useAccount();
-  const [rawList, setRawList] = useState("");
+  const [savedTreeData, setSavedTreeData] = useState<MerkleTreeData | null>(null);
+  const [checkAddress, setCheckAddress] = useState("");
+
   const {
     claim,
     isClaimPending,
     claimHash,
     hasClaimed,
     claimAmountWei,
-    isPaused
+    isPaused,
+    merkleRoot
   } = useWhitelistClaim();
 
-  const addresses = useMemo(() => parseAddressList(rawList), [rawList]);
+  useEffect(() => {
+    setSavedTreeData(loadTreeData());
+  }, []);
+
   const leaf = useMemo(() => (address ? getLeaf(address) : null), [address]);
+  const canUseStoredTree = useMemo(() => {
+    if (!savedTreeData || !merkleRoot || merkleRoot === "0x") {
+      return false;
+    }
+    return rootMatchesTreeData(savedTreeData, merkleRoot);
+  }, [savedTreeData, merkleRoot]);
+
   const proof = useMemo(() => {
-    if (!address || addresses.length === 0) {
+    if (!address || !canUseStoredTree || !savedTreeData) {
       return [];
     }
-    return getProof(addresses, address);
-  }, [address, addresses]);
+    return getProofFromTreeData(savedTreeData, address);
+  }, [address, canUseStoredTree, savedTreeData]);
 
-  const isEligible = Boolean(address && proof.length >= 0 && addresses.includes(address.toLowerCase()));
+  const isEligible = Boolean(address && canUseStoredTree && proof.length > 0);
+
+  const checkAddressResult = useMemo(() => {
+    if (!checkAddress) {
+      return "Enter an address to check";
+    }
+    if (!savedTreeData) {
+      return "No saved whitelist tree data found";
+    }
+    if (!canUseStoredTree) {
+      return "Saved tree root does not match on-chain root";
+    }
+
+    const normalized = checkAddress.trim().toLowerCase();
+    const exists = Boolean(savedTreeData.proofsByAddress[normalized]);
+    return exists ? "Address is eligible in saved tree" : "Address not found in saved tree";
+  }, [canUseStoredTree, checkAddress, savedTreeData]);
 
   async function onClaim() {
     if (!address) {
@@ -37,7 +72,7 @@ export default function ClaimPage() {
     }
 
     if (!isEligible) {
-      toast.error("Connected wallet is not in current local whitelist");
+      toast.error("Connected wallet has no valid proof for the on-chain root");
       return;
     }
 
@@ -56,30 +91,34 @@ export default function ClaimPage() {
         <div className="rounded-2xl border border-white/10 bg-black/35 p-6 backdrop-blur-xl">
           <h1 className="font-display text-3xl font-semibold text-white">Claim</h1>
           <p className="mt-3 text-slate-200">
-            Connect your wallet, paste your current whitelist snapshot, and submit claim.
+            Connect your wallet, verify eligibility against the active on-chain root, and submit
+            claim.
           </p>
           <ul className="mt-5 space-y-2 text-sm text-slate-300">
             <li>Connected: {isConnected ? "Yes" : "No"}</li>
             <li>Paused: {isPaused ? "Yes" : "No"}</li>
             <li>Already claimed: {hasClaimed ? "Yes" : "No"}</li>
             <li>Claim amount (wei): {claimAmountWei}</li>
+            <li>On-chain Merkle root: {merkleRoot}</li>
+            <li>Saved tree loaded: {savedTreeData ? "Yes" : "No"}</li>
+            <li>Saved root matches on-chain root: {canUseStoredTree ? "Yes" : "No"}</li>
             <li>Leaf: {leaf ?? "-"}</li>
           </ul>
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-black/35 p-6 backdrop-blur-xl">
           <label className="mb-2 block text-sm font-semibold text-slate-100">
-            Whitelist addresses (one per line)
+            Check address eligibility
           </label>
-          <textarea
-            value={rawList}
-            onChange={(event) => setRawList(event.target.value)}
-            className="h-44 w-full rounded-xl border border-white/15 bg-black/35 p-3 text-sm text-slate-100 outline-none focus:border-accent"
+          <input
+            value={checkAddress}
+            onChange={(event) => setCheckAddress(event.target.value)}
+            className="w-full rounded-xl border border-white/15 bg-black/35 px-3 py-2 text-sm text-slate-100"
             placeholder="0x..."
           />
 
           <div className="mt-4 text-sm text-slate-300">
-            <p>Parsed entries: {addresses.length}</p>
+            <p>{checkAddressResult}</p>
             <p>Proof length: {proof.length}</p>
             <p>Eligible: {isEligible ? "Yes" : "No"}</p>
           </div>
@@ -87,7 +126,7 @@ export default function ClaimPage() {
           <button
             type="button"
             onClick={onClaim}
-            disabled={!isConnected || isPaused || hasClaimed || isClaimPending}
+            disabled={!isConnected || isPaused || hasClaimed || isClaimPending || !isEligible}
             className="mt-6 w-full rounded-xl bg-accent px-4 py-3 font-semibold text-slate-950 transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isClaimPending ? "Submitting..." : "Claim ETH"}

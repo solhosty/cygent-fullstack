@@ -49,6 +49,14 @@ export function useWhitelistClaim() {
     query: { refetchInterval: 8_000 }
   });
 
+  const merkleRootRead = useReadContract({
+    address: whitelistClaimAddress,
+    abi: whitelistClaimAbi,
+    functionName: "merkleRoot",
+    chainId: targetChainId,
+    query: { refetchInterval: 8_000 }
+  });
+
   const waitResult = useWaitForTransactionReceipt({ hash: txHash });
 
   const isOwner = useMemo(() => {
@@ -129,6 +137,7 @@ export function useWhitelistClaim() {
     hasClaimed: Boolean(claimedRead.data),
     isPaused: Boolean(pausedRead.data),
     claimAmountWei: claimAmountRead.data ? String(claimAmountRead.data) : "0",
+    merkleRoot: merkleRootRead.data ? String(merkleRootRead.data) : "0x",
     isOwner,
     isTxMined: waitResult.isSuccess
   };
