@@ -5,3 +5,24 @@ contracts/artifacts/
 .env
 
 frontend/.next/
+
+# Auto-added by Cygent
+.env.*
+!.env.example
+!.env.template
+coverage/
+.next/
+out/
+dist/
+build/
+.turbo/
+.vercel/
+.nyc_output/
+*.tsbuildinfo
+.cache/
+cache/
+artifacts/
+typechain-types/
+broadcast/
+cache/
+out/
