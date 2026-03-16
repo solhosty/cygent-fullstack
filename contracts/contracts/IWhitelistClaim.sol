@@ -9,6 +9,7 @@ interface IWhitelistClaim {
 
     function claim(bytes32[] calldata proof) external;
     function deposit() external payable;
+    receive() external payable;
     function setMerkleRoot(bytes32 newRoot) external;
     function setClaimAmount(uint256 newClaimAmount) external;
     function pause() external;
@@ -17,4 +18,6 @@ interface IWhitelistClaim {
     function merkleRoot() external view returns (bytes32);
     function claimAmount() external view returns (uint256);
     function claimed(address account) external view returns (bool);
+    function totalDeposited() external view returns (uint256);
+    function totalClaimed() external view returns (uint256);
 }
