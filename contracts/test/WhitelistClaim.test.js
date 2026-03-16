@@ -69,6 +69,40 @@ describe("WhitelistClaim", function () {
     await expect(contract.connect(whitelisted).claim([])).to.be.revertedWith("Insufficient ETH");
   });
 
+  it("reverts direct ETH transfers", async function () {
+    const { contract, owner } = await deployFixture();
+
+    await expect(
+      owner.sendTransaction({
+        to: await contract.getAddress(),
+        value: 1n
+      })
+    ).to.be.revertedWith("Direct ETH not accepted");
+  });
+
+  it("tracks internal accounting for deposits and claims", async function () {
+    const { contract, owner, whitelisted, claimAmount } = await deployFixture();
+    const firstDeposit = ethers.parseEther("0.2");
+    const secondDeposit = ethers.parseEther("0.15");
+
+    expect(await contract.totalDeposited()).to.equal(0n);
+    expect(await contract.totalClaimed()).to.equal(0n);
+    expect(await contract.availableBalance()).to.equal(0n);
+
+    await contract.connect(owner).deposit({ value: firstDeposit });
+    expect(await contract.totalDeposited()).to.equal(firstDeposit);
+    expect(await contract.availableBalance()).to.equal(firstDeposit);
+
+    await contract.connect(owner).deposit({ value: secondDeposit });
+    expect(await contract.totalDeposited()).to.equal(firstDeposit + secondDeposit);
+    expect(await contract.availableBalance()).to.equal(firstDeposit + secondDeposit);
+
+    await contract.connect(whitelisted).claim([]);
+
+    expect(await contract.totalClaimed()).to.equal(claimAmount);
+    expect(await contract.availableBalance()).to.equal(firstDeposit + secondDeposit - claimAmount);
+  });
+
   it("emits root and claim amount update events", async function () {
     const { contract, owner, leaf } = await deployFixture();
 
