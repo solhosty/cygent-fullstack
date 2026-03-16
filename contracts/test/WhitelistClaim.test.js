@@ -16,15 +16,20 @@ describe("WhitelistClaim", function () {
 
   it("allows a whitelisted user to claim once", async function () {
     const { contract, owner, whitelisted, claimAmount } = await deployFixture();
+    const depositAmount = ethers.parseEther("1");
 
-    await expect(contract.connect(owner).deposit({ value: ethers.parseEther("1") }))
+    await expect(contract.connect(owner).deposit({ value: depositAmount }))
       .to.emit(contract, "Deposited");
+
+    expect(await contract.totalDeposited()).to.equal(depositAmount);
+    expect(await contract.totalClaimed()).to.equal(0n);
 
     await expect(contract.connect(whitelisted).claim([]))
       .to.emit(contract, "Claimed")
       .withArgs(whitelisted.address, claimAmount);
 
     expect(await contract.claimed(whitelisted.address)).to.equal(true);
+    expect(await contract.totalClaimed()).to.equal(claimAmount);
   });
 
   it("reverts claim with invalid proof", async function () {
@@ -63,10 +68,27 @@ describe("WhitelistClaim", function () {
     await expect(contract.connect(other).deposit({ value: 1n })).to.be.reverted;
   });
 
-  it("reverts claim when contract balance is insufficient", async function () {
+  it("reverts claim when funded claim ledger is insufficient", async function () {
     const { contract, whitelisted } = await deployFixture();
 
-    await expect(contract.connect(whitelisted).claim([])).to.be.revertedWith("Insufficient ETH");
+    await expect(contract.connect(whitelisted).claim([])).to.be.revertedWith("Insufficient claim liquidity");
+  });
+
+  it("ignores externally injected ETH for claim eligibility", async function () {
+    const { contract, owner, whitelisted, other, claimAmount } = await deployFixture();
+
+    await contract.connect(owner).deposit({ value: claimAmount });
+    await contract.connect(whitelisted).claim([]);
+
+    const otherLeaf = ethers.keccak256(ethers.solidityPacked(["address"], [other.address]));
+    await contract.connect(owner).setMerkleRoot(otherLeaf);
+
+    await ethers.provider.send("hardhat_setBalance", [
+      await contract.getAddress(),
+      ethers.toBeHex(ethers.parseEther("10"))
+    ]);
+
+    await expect(contract.connect(other).claim([])).to.be.revertedWith("Insufficient claim liquidity");
   });
 
   it("emits root and claim amount update events", async function () {

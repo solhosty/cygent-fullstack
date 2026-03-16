@@ -12,6 +12,8 @@ contract WhitelistClaim is IWhitelistClaim, Ownable, Pausable, ReentrancyGuard {
     bytes32 public merkleRoot;
     uint256 public claimAmount;
     mapping(address => bool) public claimed;
+    uint256 public totalDeposited;
+    uint256 public totalClaimed;
 
     constructor(bytes32 initialMerkleRoot, uint256 initialClaimAmount) Ownable(msg.sender) {
         require(initialClaimAmount > 0, "Claim amount must be > 0");
@@ -23,9 +25,10 @@ contract WhitelistClaim is IWhitelistClaim, Ownable, Pausable, ReentrancyGuard {
         require(!claimed[msg.sender], "Already claimed");
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         require(MerkleProof.verify(proof, merkleRoot, leaf), "Invalid proof");
-        require(address(this).balance >= claimAmount, "Insufficient ETH");
+        require(totalDeposited - totalClaimed >= claimAmount, "Insufficient claim liquidity");
 
         claimed[msg.sender] = true;
+        totalClaimed += claimAmount;
 
         (bool ok, ) = msg.sender.call{value: claimAmount}("");
         require(ok, "ETH transfer failed");
@@ -35,6 +38,7 @@ contract WhitelistClaim is IWhitelistClaim, Ownable, Pausable, ReentrancyGuard {
 
     function deposit() external payable onlyOwner {
         require(msg.value > 0, "No ETH sent");
+        totalDeposited += msg.value;
         emit Deposited(msg.sender, msg.value);
     }
 
