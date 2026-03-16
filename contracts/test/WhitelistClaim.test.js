@@ -69,6 +69,45 @@ describe("WhitelistClaim", function () {
     await expect(contract.connect(whitelisted).claim([])).to.be.revertedWith("Insufficient ETH");
   });
 
+  it("rejects direct ETH transfers", async function () {
+    const { contract, other } = await deployFixture();
+
+    await expect(
+      other.sendTransaction({
+        to: await contract.getAddress(),
+        value: 1n,
+      })
+    ).to.be.revertedWith("Direct ETH transfer disabled");
+  });
+
+  it("tracks total deposited and total claimed", async function () {
+    const { contract, owner, whitelisted, claimAmount } = await deployFixture();
+    const depositA = ethers.parseEther("0.2");
+    const depositB = ethers.parseEther("0.3");
+
+    await contract.connect(owner).deposit({ value: depositA });
+    await contract.connect(owner).deposit({ value: depositB });
+
+    expect(await contract.totalDeposited()).to.equal(depositA + depositB);
+    expect(await contract.totalClaimed()).to.equal(0n);
+
+    await contract.connect(whitelisted).claim([]);
+
+    expect(await contract.totalClaimed()).to.equal(claimAmount);
+  });
+
+  it("limits claims to tracked deposited funds", async function () {
+    const { contract, owner, whitelisted, other, claimAmount } = await deployFixture();
+
+    await contract.connect(owner).deposit({ value: claimAmount });
+    await contract.connect(whitelisted).claim([]);
+
+    const otherLeaf = ethers.keccak256(ethers.solidityPacked(["address"], [other.address]));
+    await contract.connect(owner).setMerkleRoot(otherLeaf);
+
+    await expect(contract.connect(other).claim([])).to.be.revertedWith("Insufficient ETH");
+  });
+
   it("emits root and claim amount update events", async function () {
     const { contract, owner, leaf } = await deployFixture();
 
