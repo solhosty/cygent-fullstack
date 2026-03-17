@@ -69,6 +69,37 @@ describe("WhitelistClaim", function () {
     await expect(contract.connect(whitelisted).claim([])).to.be.revertedWith("Insufficient ETH");
   });
 
+  it("tracks deposited, claimed, and available balances", async function () {
+    const { contract, owner, whitelisted, claimAmount } = await deployFixture();
+    const depositAmount = ethers.parseEther("1");
+
+    await contract.connect(owner).deposit({ value: depositAmount });
+
+    expect(await contract.totalDeposited()).to.equal(depositAmount);
+    expect(await contract.totalClaimed()).to.equal(0n);
+    expect(await contract.availableBalance()).to.equal(depositAmount);
+
+    await contract.connect(whitelisted).claim([]);
+
+    expect(await contract.totalClaimed()).to.equal(claimAmount);
+    expect(await contract.availableBalance()).to.equal(depositAmount - claimAmount);
+  });
+
+  it("does not allow claims funded only by forced ETH", async function () {
+    const { contract, whitelisted } = await deployFixture();
+    const forcedAmount = ethers.parseEther("1");
+
+    await ethers.provider.send("hardhat_setBalance", [
+      await contract.getAddress(),
+      `0x${forcedAmount.toString(16)}`,
+    ]);
+
+    expect(await ethers.provider.getBalance(await contract.getAddress())).to.equal(forcedAmount);
+    expect(await contract.availableBalance()).to.equal(0n);
+
+    await expect(contract.connect(whitelisted).claim([])).to.be.revertedWith("Insufficient ETH");
+  });
+
   it("emits root and claim amount update events", async function () {
     const { contract, owner, leaf } = await deployFixture();
 
