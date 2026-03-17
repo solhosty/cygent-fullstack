@@ -1,0 +1,17 @@
+{
+  "name": "cygent-wallet-app",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace frontend",
+    "build": "npm run build --workspace frontend",
+    "test:contracts": "forge test --root contracts",
+    "deploy:contracts": "forge script script/DeployCygentToken.s.sol:DeployCygentToken --root contracts --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "^1.39.0"
+  }
+}
