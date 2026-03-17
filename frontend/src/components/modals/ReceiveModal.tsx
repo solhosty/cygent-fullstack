@@ -1,12 +1,14 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Copy } from "lucide-react";
+import { Copy, Share2 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { truncateAddress } from "@/lib/formatters";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CHAIN_META } from "@/lib/constants";
 
 type Props = {
   open: boolean;
@@ -15,6 +17,8 @@ type Props = {
 
 export function ReceiveModal({ open, onOpenChange }: Props) {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const chainMeta = CHAIN_META[chainId as keyof typeof CHAIN_META];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -30,24 +34,52 @@ export function ReceiveModal({ open, onOpenChange }: Props) {
               <DialogHeader>
                 <DialogTitle>Receive</DialogTitle>
               </DialogHeader>
-              <div className="mx-auto rounded-2xl bg-white p-4">
+              <div className="glass-sm mx-auto rounded-2xl bg-white p-4">
                 <QRCodeSVG value={address ?? ""} size={180} />
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-white/5 p-3">
-                <span className="font-mono text-sm">{truncateAddress(address ?? "")}</span>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  onClick={async () => {
-                    if (address) {
+              <div className="glass-sm space-y-3 rounded-xl p-3">
+                <p className="font-mono text-xs break-all">{address}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={async () => {
+                            if (address) {
+                              await navigator.clipboard.writeText(address);
+                              toast.success("Address copied");
+                            }
+                          }}
+                        >
+                          <Copy className="mr-1.5 h-3.5 w-3.5" />
+                          Copy
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Copy wallet address</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      if (!address) {
+                        return;
+                      }
+                      if (navigator.share) {
+                        await navigator.share({ text: address, title: "Wallet address" });
+                        return;
+                      }
                       await navigator.clipboard.writeText(address);
-                      toast.success("Address copied");
-                    }
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
+                      toast.success("Address copied for sharing");
+                    }}
+                  >
+                    <Share2 className="mr-1.5 h-3.5 w-3.5" />
+                    Share
+                  </Button>
+                </div>
               </div>
+              {chainMeta && <Badge variant="secondary">Network: {chainMeta.name}</Badge>}
             </motion.div>
           </DialogContent>
         )}

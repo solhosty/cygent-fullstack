@@ -3,11 +3,14 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
 
-const badgeVariants = cva("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", {
+const badgeVariants = cva("inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium", {
   variants: {
     variant: {
-      default: "bg-emerald-500/20 text-emerald-300",
-      destructive: "bg-red-500/20 text-red-300"
+      default: "border-emerald-400/20 bg-emerald-400/15 text-emerald-200",
+      secondary: "border-white/15 bg-white/10 text-white/90",
+      outline: "border-white/20 bg-transparent text-white/80",
+      warning: "border-amber-300/20 bg-amber-400/15 text-amber-100",
+      destructive: "border-red-300/20 bg-red-500/15 text-red-200"
     }
   },
   defaultVariants: {

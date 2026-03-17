@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useAccount, useChainId } from "wagmi";
 
 import { alchemyRpcByChainId } from "@/config/chains";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatTokenAmount } from "@/lib/formatters";
@@ -50,28 +51,40 @@ export function TokenBalances() {
   });
 
   return (
-    <GlassCard className="h-[320px] p-0">
-      <div className="border-b border-white/10 p-4">
-        <p className="text-sm text-white/70">Token balances</p>
-      </div>
-      <ScrollArea className="h-[260px] p-4">
+    <Card className="h-[370px]">
+      <CardHeader className="pb-2">
+        <CardTitle>Token balances</CardTitle>
+        <CardDescription>Live ERC-20 holdings via Alchemy</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[270px] pr-2">
         {isLoading ? (
           <div className="space-y-3">
-            <Skeleton className="h-12 w-full bg-white/10" />
-            <Skeleton className="h-12 w-full bg-white/10" />
-            <Skeleton className="h-12 w-full bg-white/10" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
         ) : (
           <div className="space-y-3">
-            {data?.slice(0, 20).map((token) => (
-              <div key={token.contractAddress} className="flex items-center justify-between rounded-xl bg-white/5 p-3">
-                <span className="font-mono text-xs text-white/70">{token.contractAddress.slice(0, 10)}...</span>
-                <span className="text-sm">{formatTokenAmount(token.tokenBalance ?? "0")}</span>
-              </div>
-            ))}
+            {data?.length ? (
+              data.slice(0, 20).map((token) => (
+                <div key={token.contractAddress} className="glass-sm flex items-center justify-between rounded-xl p-3">
+                  <div className="space-y-1">
+                    <Badge variant="outline" className="font-mono text-[10px]">
+                      {token.contractAddress.slice(0, 8)}...{token.contractAddress.slice(-4)}
+                    </Badge>
+                    <p className="text-xs text-muted-foreground">Contract</p>
+                  </div>
+                  <p className="font-mono text-sm">{formatTokenAmount(token.tokenBalance ?? "0")}</p>
+                </div>
+              ))
+            ) : (
+              <div className="glass-sm rounded-xl p-5 text-center text-sm text-muted-foreground">No tokens detected for this wallet.</div>
+            )}
           </div>
         )}
-      </ScrollArea>
-    </GlassCard>
+        </ScrollArea>
+      </CardContent>
+    </Card>
   );
 }

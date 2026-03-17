@@ -1,25 +1,36 @@
 import { useState } from "react";
+import { ArrowDownLeft, ArrowUpRight, RefreshCcw } from "lucide-react";
 
 import { SendModal } from "@/components/modals/SendModal";
 import { ReceiveModal } from "@/components/modals/ReceiveModal";
 import { Button } from "@/components/ui/button";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function QuickActions() {
   const [sendOpen, setSendOpen] = useState(false);
   const [receiveOpen, setReceiveOpen] = useState(false);
 
   return (
-    <GlassCard className="space-y-4 p-6">
-      <p className="text-sm text-white/60">Quick actions</p>
-      <div className="flex flex-wrap gap-3">
-        <Button onClick={() => setSendOpen(true)}>Send</Button>
-        <Button variant="outline" onClick={() => setReceiveOpen(true)}>
-          Receive
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle>Quick actions</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <Button variant="gradient" className="w-full justify-start" onClick={() => setSendOpen(true)}>
+          <ArrowUpRight className="mr-2 h-4 w-4" />
+          Send assets
         </Button>
-      </div>
+        <Button variant="outline" className="w-full justify-start" onClick={() => setReceiveOpen(true)}>
+          <ArrowDownLeft className="mr-2 h-4 w-4" />
+          Receive assets
+        </Button>
+        <Button variant="secondary" className="w-full justify-start" disabled>
+          <RefreshCcw className="mr-2 h-4 w-4" />
+          Swap (coming soon)
+        </Button>
+      </CardContent>
       <SendModal open={sendOpen} onOpenChange={setSendOpen} />
       <ReceiveModal open={receiveOpen} onOpenChange={setReceiveOpen} />
-    </GlassCard>
+    </Card>
   );
 }
