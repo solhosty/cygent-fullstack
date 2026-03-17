@@ -1,12 +1,12 @@
 import abi from "@/abi/WhitelistClaim.json";
 
-const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
+const contractAddress = process.env["NEXT_PUBLIC_CONTRACT_ADDRESS"];
 
 if (!contractAddress || !/^0x[a-fA-F0-9]{40}$/.test(contractAddress)) {
   throw new Error("Missing or invalid NEXT_PUBLIC_CONTRACT_ADDRESS");
 }
 
-const chainIdRaw = process.env.NEXT_PUBLIC_CHAIN_ID ?? "11155111";
+const chainIdRaw = process.env["NEXT_PUBLIC_CHAIN_ID"] ?? "11155111";
 const chainId = Number(chainIdRaw);
 
 if (!Number.isInteger(chainId)) {

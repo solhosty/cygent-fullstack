@@ -76,10 +76,13 @@ export function buildMerkleTreeData(addresses: string[]): MerkleTreeData {
     root: tree.getHexRoot() as HexString,
     leaves: leaves.map((leaf) => `0x${leaf.toString("hex")}` as HexString),
     proofsByAddress: Object.fromEntries(
-      normalized.map((item, index) => [
-        item,
-        tree.getHexProof(leaves[index]) as HexString[]
-      ])
+      normalized.map((item, index) => {
+        const leaf = leaves[index];
+        if (!leaf) {
+          throw new Error("Failed to build Merkle leaf");
+        }
+        return [item, tree.getHexProof(leaf) as HexString[]];
+      })
     )
   };
 }
