@@ -78,7 +78,7 @@ export function buildMerkleTreeData(addresses: string[]): MerkleTreeData {
     proofsByAddress: Object.fromEntries(
       normalized.map((item, index) => [
         item,
-        tree.getHexProof(leaves[index]) as HexString[]
+        tree.getHexProof(leaves[index]!) as HexString[]
       ])
     )
   };
